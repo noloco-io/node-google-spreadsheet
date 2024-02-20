@@ -1,5 +1,5 @@
 {
-  "name": "google-spreadsheet",
+  "name": "@noloco/google-spreadsheet",
   "version": "4.1.1",
   "description": "Google Sheets API -- simple interface to read/write data and manage sheets",
   "keywords": [

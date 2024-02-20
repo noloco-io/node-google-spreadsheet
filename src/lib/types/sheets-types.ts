@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { MakeOptional } from './util-types';
+import {MakeOptional} from './util-types';
 
 // some basic types which are just aliases, but they make the code a bit clearer
 export type Integer = number;
@@ -413,6 +413,24 @@ export type GridRangeWithOptionalWorksheetId = MakeOptional<GridRange, 'sheetId'
 export type DataFilter = A1Range | GridRange;
 export type DataFilterWithoutWorksheetId = A1Range | GridRangeWithoutWorksheetId;
 
+export type DeveloperMetadataId = number;
+export type DeveloperMetadataKey = string;
+export type DeveloperMetadataValue = string;
+
+export type DeveloperMetadataLookup = {
+  locationType: DeveloperMetadataLocationType,
+  metadataLocation: DeveloperMetadataLocation,
+  locationMatchingStrategy: 'EXACT_LOCATION' | 'INTERSECTING_LOCATION'
+  metadataId: DeveloperMetadataId,
+  metadataKey: DeveloperMetadataKey,
+  metadataValue: DeveloperMetadataValue,
+  visibility: DeveloperMetadataVisibility
+};
+export type DataFilterObject = {
+  a1Range?: A1Range,
+  gridRange?: GridRange
+  developerMetadataLookup?: DeveloperMetadataLookup
+};
 
 /** @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#colorstyle */
 export type ColorStyle = { rgbColor: Color } | { themeColor: ThemeColorType };

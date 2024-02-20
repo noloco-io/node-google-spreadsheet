@@ -1,14 +1,21 @@
 /* eslint-disable max-classes-per-file */
 import * as _ from './lodash';
 
-import { columnToLetter } from './utils';
+import {columnToLetter} from './utils';
 
-import { GoogleSpreadsheetWorksheet } from './GoogleSpreadsheetWorksheet';
-import { GoogleSpreadsheetCellErrorValue } from './GoogleSpreadsheetCellErrorValue';
+import {GoogleSpreadsheetWorksheet} from './GoogleSpreadsheetWorksheet';
+import {GoogleSpreadsheetCellErrorValue} from './GoogleSpreadsheetCellErrorValue';
 
 import {
   CellData,
-  CellFormat, CellValueType, ColumnIndex, RowIndex,
+  CellFormat,
+  CellValueType,
+  ColumnIndex,
+  DeveloperMetadataId,
+  DeveloperMetadataKey,
+  DeveloperMetadataValue,
+  DeveloperMetadataVisibility,
+  RowIndex,
 } from './types/sheets-types';
 
 export class GoogleSpreadsheetCell {
@@ -239,6 +246,36 @@ export class GoogleSpreadsheetCell {
    * */
   async save() {
     await this._sheet.saveCells([this]);
+  }
+
+  async createDeveloperMetadata(
+    metadataKey:DeveloperMetadataKey,
+    metadataValue:DeveloperMetadataValue,
+    visibility:DeveloperMetadataVisibility,
+    metadataId:DeveloperMetadataId
+  ) {
+    return this._sheet._spreadsheet.createRangeDeveloperMetadata(
+      metadataKey,
+      metadataValue,
+      {
+        dimension: 'COLUMNS',
+        sheetId: this._sheet.sheetId,
+        startIndex: this._columnIndex,
+        endIndex: this._columnIndex + 1,
+      },
+      visibility,
+      metadataId
+    );
+  }
+
+  async getDeveloperMetadata() {
+    return this._sheet._spreadsheet.getDeveloperMetadataByGridRange(
+      {
+        sheetId: this._sheet.sheetId,
+        startColumnIndex: this._columnIndex,
+        endColumnIndex: this._columnIndex + 1,
+      }
+    );
   }
 
   /**

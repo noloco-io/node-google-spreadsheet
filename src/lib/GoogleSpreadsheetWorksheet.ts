@@ -1,17 +1,33 @@
-import { ReadableStream } from 'node:stream/web';
+import {ReadableStream} from 'node:stream/web';
 import * as _ from './lodash';
 
-import { GoogleSpreadsheetRow } from './GoogleSpreadsheetRow';
-import { GoogleSpreadsheetCell } from './GoogleSpreadsheetCell';
+import {GoogleSpreadsheetRow} from './GoogleSpreadsheetRow';
+import {GoogleSpreadsheetCell} from './GoogleSpreadsheetCell';
 
+import {checkForDuplicateHeaders, columnToLetter, getFieldMask, letterToColumn,} from './utils';
+import {GoogleSpreadsheet} from './GoogleSpreadsheet';
 import {
-  getFieldMask, columnToLetter, letterToColumn, checkForDuplicateHeaders,
-} from './utils';
-import { GoogleSpreadsheet } from './GoogleSpreadsheet';
-import {
-  A1Range, SpreadsheetId, DimensionRangeIndexes, WorksheetDimension, WorksheetId, WorksheetProperties, A1Address,
-  RowIndex, ColumnIndex, DataFilterWithoutWorksheetId, DataFilter, GetValuesRequestOptions, WorksheetGridProperties,
-  WorksheetDimensionProperties, CellDataRange, AddRowOptions, GridRangeWithOptionalWorksheetId,
+  A1Address,
+  A1Range,
+  AddRowOptions,
+  CellDataRange,
+  ColumnIndex,
+  DataFilter,
+  DataFilterWithoutWorksheetId,
+  DeveloperMetadataId,
+  DeveloperMetadataKey,
+  DeveloperMetadataValue,
+  DeveloperMetadataVisibility,
+  DimensionRangeIndexes,
+  GetValuesRequestOptions,
+  GridRangeWithOptionalWorksheetId,
+  RowIndex,
+  SpreadsheetId,
+  WorksheetDimension,
+  WorksheetDimensionProperties,
+  WorksheetGridProperties,
+  WorksheetId,
+  WorksheetProperties,
 } from './types/sheets-types';
 
 
@@ -339,9 +355,9 @@ export class GoogleSpreadsheetWorksheet {
     }
   }
 
-  async loadHeaderRow(headerRowIndex?: number) {
+  async loadHeaderRow(headerRowIndex?: number, options?: GetValuesRequestOptions) {
     if (headerRowIndex !== undefined) this._headerRowIndex = headerRowIndex;
-    const rows = await this.getCellsInRange(`A${this._headerRowIndex}:${this.lastColumnLetter}${this._headerRowIndex}`);
+    const rows = await this.getCellsInRange(`A${this._headerRowIndex}:${this.lastColumnLetter}${this._headerRowIndex}`, options);
     if (!rows) {
       throw new Error('No values in the header row - fill the first row with header values before trying to interact with rows');
     }
@@ -476,7 +492,7 @@ export class GoogleSpreadsheetWorksheet {
       offset?: number,
       /** limit number of rows fetched */
       limit?: number,
-    }
+    } & GetValuesRequestOptions
   ) {
     // https://developers.google.com/sheets/api/guides/migration
     // v4 API does not have equivalents for the row-order query parameters provided
@@ -487,6 +503,11 @@ export class GoogleSpreadsheetWorksheet {
     // However, you can retrieve the relevant data and sort through it as needed in your application
     const offset = options?.offset || 0;
     const limit = options?.limit || this.rowCount - 1;
+    const valueRequestOptions = {
+      ...options,
+      limit: undefined,
+      offset: undefined,
+    };
 
     await this._ensureHeaderRowLoaded();
 
@@ -494,7 +515,8 @@ export class GoogleSpreadsheetWorksheet {
     const lastRow = firstRow + limit - 1; // inclusive so we subtract 1
     const lastColumn = columnToLetter(this.headerValues.length);
     const rawRows = await this.getCellsInRange(
-      `A${firstRow}:${lastColumn}${lastRow}`
+      `A${firstRow}:${lastColumn}${lastRow}`,
+      valueRequestOptions
     );
 
     if (!rawRows) return [];
@@ -874,9 +896,21 @@ export class GoogleSpreadsheetWorksheet {
     // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#DeleteBandingRequest
   }
 
-  async createDeveloperMetadata() {
+  async createDeveloperMetadata(
+    metadataKey: DeveloperMetadataKey,
+    metadataValue: DeveloperMetadataValue,
+    visibility: DeveloperMetadataVisibility,
+    metadataId: DeveloperMetadataId
+  ) {
     // Request type = `createDeveloperMetadata`
     // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#CreateDeveloperMetadataRequest
+    return this._spreadsheet.createSheetDeveloperMetadata(
+      metadataKey,
+      metadataValue,
+      this.sheetId,
+      visibility,
+      metadataId
+    );
   }
 
   async updateDeveloperMetadata() {
