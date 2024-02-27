@@ -13,12 +13,13 @@ _Class Reference_
 You do not initialize worksheets directly. Instead you can load the sheets from a doc. For example:
 
 ```javascript
-const doc = new GoogleSpreadsheet('<YOUR-DOC-ID>');
-await doc.loadInfo(); // loads sheets
+const doc = new GoogleSpreadsheet('<YOUR-DOC-ID>', auth);
+await doc.loadInfo(); // loads sheets and other document metadata
+
+const firstSheet = doc.sheetsByIndex[0]; // in the order they appear on the sheets UI
+const sheet123 = doc.sheetsById[123]; // accessible via ID if you already know it
 
 const newSheet = await doc.addSheet(); // adds a new sheet
-const firstSheet = doc.sheetsByIndex[0]; // in the order they appear on the sheets UI
-const otherSheet = doc.sheetsById[123]; // accessible via ID if you already know it
 ```
 
 ## Properties
@@ -72,7 +73,7 @@ Usually this is called automatically when loading rows via `getRows()` if the he
 
 Param|Type|Required|Description
 ---|---|---|---
-`headerRowIndex`|Number|-|Optionally set custom header row index, if headers are not in first row<br>NOTE - not zero-indexed
+`headerRowIndex`|Number<br>_int >= 1_|-|Optionally set custom header row index, if headers are not in first row<br>NOTE - not zero-indexed, 1 = first
 
 - ✨ **Side effects** - `sheet.headerValues` is populated
 
@@ -82,7 +83,7 @@ Param|Type|Required|Description
 Param|Type|Required|Description
 ---|---|---|---
 `headerValues`|[String]|✅|Array of strings to set as cell values in first row
-`headerRowIndex`|Number|-|Optionally set custom header row index, if headers are not in first row<br>NOTE - not zero-indexed
+`headerRowIndex`|Number<br>_int >= 1_|-|Optionally set custom header row index, if headers are not in first row<br>NOTE - not zero-indexed, 1 = first
 
 - ✨ **Side effects** - header row of the sheet is filled, `sheet.headerValues` is populated
 
@@ -122,11 +123,25 @@ Param|Type|Required|Description
 ---|---|---|---
 `options`|Object|-|Options object
 `options.offset`|Number<br>_int >= 0_|-|How many rows to skip from the top
-`options.limit`|Number<br>_int > 0_|-|Max number of rows to fetch
+`options.limit`|Number<br>_int >= 1_|-|Max number of rows to fetch
 
 - ↩️ **Returns** - [[GoogleSpreadsheetRow](classes/google-spreadsheet-row)] (in a promise)
 
 !> The older version of this module allowed you to filter and order the rows as you fetched them, but this is no longer supported by google
+
+
+#### `clearRows(options)` (async) :id=fn-clearRows
+> Clear rows in the sheet
+
+By default, this will clear all rows and leave the header (and anything above it) intact, but you can pass in start and/or end to limit which rows are cleared.
+
+Param|Type|Required|Description
+---|---|---|---
+`options`|Object|-|Options object
+`options.start`|Number<br>_int >= 1_|-|A1 style row number of first row to clear<br>_defaults to first non-header row_
+`options.end`|Number<br>_int >= 1_|-|A1 style row number of last row to clear<br>_defaults to last row_
+
+- ✨ **Side effects** - rows in the sheet are emptied, loaded GoogleSpreadsheetRows in the cache have the data cleared
 
 
 ### Working With Cells
@@ -136,9 +151,9 @@ The cell-based interface lets you load and update individual cells in a sheeet, 
 #### `loadCells(filters)` (async) :id=fn-loadCells
 > Fetch cells from google
 
-You can filter the cells you want to fetch in several ways. See [Data Filters](https://developers.google.com/sheets/api/reference/rest/v4/DataFilter) for more info. Strings are treated as A1 ranges, objects are detected to be a [GridRange](https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#GridRange) with sheetId not required.
+!> This method does not return the cells it loads, instead they are kept in a local cache managed by the sheet. See methods below (`getCell` and `getCellByA1`) to access them.
 
-**NOTE - if using an API key (read-only access), only A1 ranges are supported**
+You can filter the cells you want to fetch in several ways. See [Data Filters](https://developers.google.com/sheets/api/reference/rest/v4/DataFilter) for more info. Strings are treated as A1 ranges, objects are detected to be a [GridRange](https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#GridRange) with sheetId not required.
 
 ```javascript
 await sheet.loadCells(); // no filter - will load ALL cells in the sheet
@@ -150,11 +165,13 @@ await sheet.loadCells({ startRowIndex: 50 }); // not all props required
 await sheet.loadCells(['B2:D5', 'B50:D55']); // can pass an array of filters
 ```
 
+!> If using an API key (read-only access), only A1 ranges are supported
+
 Param|Type|Required|Description
 ---|---|---|---
 `filters`|*|-|Can be a single filter or array of filters
 
-- ✨ **Side effects** - cells are loaded in the doc, `cellStats` is updated
+- ✨ **Side effects** - cells are loaded into local cache, `cellStats` is updated
 
 
 #### `getCell(rowIndex, columnIndex)` :id=fn-getCell
@@ -213,7 +230,7 @@ Param|Type|Required|Description
 Param|Type|Required|Description
 ---|---|---|---
 `range`|Object<br>[GridRange](https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#GridRange)|✅|Range of cells to merge, sheetId not required!
-`mergeType`|String (enum)<br>[MergeType](https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#MergeType)|-|defaults to MERGE_ALL
+`mergeType`|String (enum)<br>[MergeType](https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#MergeType)|-|_defaults to `MERGE_ALL`_
 
 - 🚨 **Warning** - Reading values from merged cells other than the top-left one will show a null value
 
@@ -267,7 +284,7 @@ Param|Type|Required|Description
 | `range` | Object | ✅ |
 | `range.startIndex` | Number<br>_int >= 0_ | ✅ | Start row/column (inclusive) |
 | `range.endIndex` | Number<br>_int >= 1_ | ✅ | End row/column (exclusive), must be greater than startIndex |
-| `inheritFromBefore` | Boolean<br>_default true_ | - | If true, tells the API to give the new columns or rows the same properties as the prior row or column<br>NOTE - defaults to false if inserting in first row/column  |
+| `inheritFromBefore` | Boolean | - | If true, tells the API to give the new columns or rows the same properties as the prior row or column<br><br>_defaults to true, unless inserting in first row/column_ |
 
 - ✨ **Side effects** - new row(s) or column(s) are inserted into the sheet
 - 🚨 **Warning** - Does not update cached rows/cells, so be sure to reload rows/cells before trying to make any updates to sheet contents
@@ -288,20 +305,39 @@ Param|Type|Required|Description
 
 ### Other
 
-#### `clear()` (async) :id=fn-clear
-> Clear all data/cells in the sheet
+#### `clear(a1Range)` (async) :id=fn-clear
+> Clear data/cells in the sheet
 
-- ✨ **Side Effects -** clears the entire sheet, resets local cache
+Defaults to clearing the entire sheet, or pass in a specific a1 range
+
+| Param | Type | Required | Description |
+| --- | --- | --- | --- |
+| `a1Range` | String (A1 range) | - | Optional specific range within the sheet to clear |
+
+- ✨ **Side Effects -** clears the sheet (entire sheet or specified range), resets local cache
 
 #### `delete()` (async) :id=fn-delete
 > Delete this sheet
 
-- ✨ **Side Effects -** sheet is deleted and removed from `doc.sheetsById` and `doc.sheetsByIndex`
+- ✨ **Side Effects -** sheet is deleted and removed from `doc.sheetsById`, `doc.sheetsByIndex`, `doc.sheetsById`
 
 _also available as `sheet.del()`_
 
+#### `duplicate(options)` (async) :id=fn-duplicate
+> Duplicate this sheet within this document
+
+|Param|Type|Required|Description
+|---|---|---|---
+| `options` | Object | - |
+| `options.title` | String | - | Name/title for new sheet, must be unique within the document<br>_defaults to something like "Copy of [sheet.title]" if not provided_ |
+| `options.index` | Number<br>_int >= 0_ | - | Where to insert the new sheet (zero-indexed)<br>_defaults to 0 (first)_ |
+| `options.id` | Number<br>_int >= 1_ | - | unique ID to use for new sheet<br>_defaults to new unique id generated by google_ |
+
+- ↩️ **Returns** - [GoogleSpreadsheetRow](classes/google-spreadsheet-row) (in a promise)
+- ✨ **Side Effects -** new sheet is creted, sheets in parent doc are updated (`sheetsByIndex`, `sheetsByTitle`, `sheetsById`)
+
 #### `copyToSpreadsheet(destinationSpreadsheetId)` (async) :id=fn-copyToSpreadsheet
-> Copy this sheet to another document
+> Copy this sheet to a different document
 
 Param|Type|Required|Description
 ---|---|---|---
@@ -309,5 +345,39 @@ Param|Type|Required|Description
 
 - ✨ **Side Effects -** sheet is copied to the other doc
 
-?> The authentication method being used must have access to the destination document as well
+?> The authentication method being used must have write access to the destination document as well
+
+### Exports
+
+See [Exports guide](guides/exports) for more info.
+
+#### `downloadAsCSV(returnStreamInsteadOfBuffer)` (async) :id=fn-downloadAsCSV
+> Export worksheet in CSV format
+
+Param|Type|Required|Description
+---|---|---|---
+`returnStreamInsteadOfBuffer`|Boolean|-|Set to true to return a stream instead of a Buffer<br/>_See [Exports guide](guides/exports) for more details_
+
+- ↩️ **Returns** - Buffer (or stream) containing CSV data
+
+
+#### `downloadAsTSV(returnStreamInsteadOfBuffer)` (async) :id=fn-downloadAsTSV
+> Export worksheet in TSV format
+
+Param|Type|Required|Description
+---|---|---|---
+`returnStreamInsteadOfBuffer`|Boolean|-|Set to true to return a stream instead of a Buffer<br/>_See [Exports guide](guides/exports) for more details_
+
+- ↩️ **Returns** - Buffer (or stream) containing TSV data
+
+
+#### `downloadAsPDF(returnStreamInsteadOfBuffer)` (async) :id=fn-downloadAsPDF
+> Export worksheet in PDF format
+
+Param|Type|Required|Description
+---|---|---|---
+`returnStreamInsteadOfBuffer`|Boolean|-|Set to true to return a stream instead of a Buffer<br/>_See [Exports guide](guides/exports) for more details_
+
+- ↩️ **Returns** - Buffer (or stream) containing PDF data
+
 
