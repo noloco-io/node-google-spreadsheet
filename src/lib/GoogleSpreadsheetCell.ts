@@ -249,10 +249,10 @@ export class GoogleSpreadsheetCell {
   }
 
   async createDeveloperMetadata(
-    metadataKey:DeveloperMetadataKey,
-    metadataValue:DeveloperMetadataValue,
-    visibility:DeveloperMetadataVisibility,
-    metadataId:DeveloperMetadataId
+    metadataKey: DeveloperMetadataKey,
+    metadataValue: DeveloperMetadataValue,
+    visibility?: DeveloperMetadataVisibility,
+    metadataId?: DeveloperMetadataId
   ) {
     return this._sheet._spreadsheet.createRangeDeveloperMetadata(
       metadataKey,

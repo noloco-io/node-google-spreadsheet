@@ -1,5 +1,4 @@
 import Axios, {AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig,} from 'axios';
-
 import {Stream} from 'stream';
 import * as _ from './lodash';
 import {GoogleSpreadsheetWorksheet} from './GoogleSpreadsheetWorksheet';
@@ -681,8 +680,8 @@ export class GoogleSpreadsheet {
     metadataKey:DeveloperMetadataKey,
     metadataValue:DeveloperMetadataValue,
     location:Partial<DeveloperMetadataLocation>,
-    visibility:DeveloperMetadataVisibility,
-    metadataId:DeveloperMetadataId
+    visibility?:DeveloperMetadataVisibility,
+    metadataId?:DeveloperMetadataId
   ) {
     // Request type = `createDeveloperMetadata`
     // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.developerMetadata#DeveloperMetadata
@@ -719,8 +718,8 @@ export class GoogleSpreadsheet {
     metadataKey:DeveloperMetadataKey,
     metadataValue:DeveloperMetadataValue,
     sheetId: number,
-    visibility:DeveloperMetadataVisibility,
-    metadataId:DeveloperMetadataId
+    visibility?:DeveloperMetadataVisibility,
+    metadataId?:DeveloperMetadataId
   ) {
     return this._createDeveloperMetadata(
       metadataKey,
@@ -737,8 +736,8 @@ export class GoogleSpreadsheet {
     metadataKey:DeveloperMetadataKey,
     metadataValue:DeveloperMetadataValue,
     range: DimensionRange,
-    visibility:DeveloperMetadataVisibility,
-    metadataId:DeveloperMetadataId
+    visibility?: DeveloperMetadataVisibility,
+    metadataId?: DeveloperMetadataId
   ) {
     return this._createDeveloperMetadata(
       metadataKey,

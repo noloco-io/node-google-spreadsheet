@@ -1,9 +1,7 @@
 import {ReadableStream} from 'node:stream/web';
 import * as _ from './lodash';
-
 import {GoogleSpreadsheetRow} from './GoogleSpreadsheetRow';
 import {GoogleSpreadsheetCell} from './GoogleSpreadsheetCell';
-
 import {checkForDuplicateHeaders, columnToLetter, getFieldMask, letterToColumn,} from './utils';
 import {GoogleSpreadsheet} from './GoogleSpreadsheet';
 import {
@@ -181,6 +179,8 @@ export class GoogleSpreadsheetWorksheet {
   get hidden() { return this._getProp('hidden'); }
   get tabColor() { return this._getProp('tabColor'); }
   get rightToLeft() { return this._getProp('rightToLeft'); }
+  get rowMetadata(): any[] { return this._rowMetadata; }
+  get columnMetadata(): any[] { return this._columnMetadata; }
 
   set sheetId(newVal: WorksheetProperties['sheetId']) { this._setProp('sheetId', newVal); }
   set title(newVal: WorksheetProperties['title']) { this._setProp('title', newVal); }
@@ -501,13 +501,21 @@ export class GoogleSpreadsheetWorksheet {
 
     // v4 API does not currently have a direct equivalent for the Sheets API v3 structured queries
     // However, you can retrieve the relevant data and sort through it as needed in your application
-    const offset = options?.offset || 0;
-    const limit = options?.limit || this.rowCount - 1;
-    const valueRequestOptions = {
-      ...options,
-      limit: undefined,
-      offset: undefined,
-    };
+    const offset = options?.offset ?? 0;
+    const limit = options?.limit ?? this.rowCount - 1;
+    let valueRequestOptions: GetValuesRequestOptions | undefined;
+
+    if (options?.majorDimension) {
+      valueRequestOptions = { majorDimension: options.majorDimension };
+    }
+
+    if (options?.valueRenderOption) {
+      if (!valueRequestOptions) {
+        valueRequestOptions = { valueRenderOption: options.valueRenderOption };
+      } else {
+        valueRequestOptions.valueRenderOption = options.valueRenderOption;
+      }
+    }
 
     await this._ensureHeaderRowLoaded();
 
@@ -899,8 +907,8 @@ export class GoogleSpreadsheetWorksheet {
   async createDeveloperMetadata(
     metadataKey: DeveloperMetadataKey,
     metadataValue: DeveloperMetadataValue,
-    visibility: DeveloperMetadataVisibility,
-    metadataId: DeveloperMetadataId
+    visibility?: DeveloperMetadataVisibility,
+    metadataId?: DeveloperMetadataId
   ) {
     // Request type = `createDeveloperMetadata`
     // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#CreateDeveloperMetadataRequest
