@@ -373,7 +373,7 @@ export class GoogleSpreadsheetWorksheet {
     if (headerValues.length > this.columnCount) {
       throw new Error(`Sheet is not large enough to fit ${headerValues.length} columns. Resize the sheet first.`);
     }
-    const trimmedHeaderValues = _.map(headerValues, (h) => h?.trim());
+    const trimmedHeaderValues = _.map(headerValues, (h) => h?.toString().trim());
     checkForDuplicateHeaders(trimmedHeaderValues);
 
     if (!_.compact(trimmedHeaderValues).length) {
