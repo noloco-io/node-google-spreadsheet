@@ -361,7 +361,7 @@ export class GoogleSpreadsheetWorksheet {
     if (!rows) {
       throw new Error('No values in the header row - fill the first row with header values before trying to interact with rows');
     }
-    this._headerValues = _.map(rows[0], (header) => header?.trim());
+    this._headerValues = _.map(rows[0], (header) => header?.toString().trim());
     if (!_.compact(this.headerValues).length) {
       throw new Error('All your header cells are blank - fill the first row with header values before trying to interact with rows');
     }
