@@ -166,42 +166,102 @@ export class GoogleSpreadsheetWorksheet {
     // see note about asserting info loaded on GoogleSpreasheet
     return this._rawProperties![param];
   }
+
   // eslint-disable-line no-unused-vars
   private _setProp<T extends keyof WorksheetProperties>(_param: T, _newVal: WorksheetProperties[T]) {
     throw new Error('Do not update directly - use `updateProperties()`');
   }
 
-  get sheetId() { return this._getProp('sheetId'); }
-  get title() { return this._getProp('title'); }
-  get index() { return this._getProp('index'); }
-  get sheetType() { return this._getProp('sheetType'); }
-  get gridProperties() { return this._getProp('gridProperties'); }
-  get hidden() { return this._getProp('hidden'); }
-  get tabColor() { return this._getProp('tabColor'); }
-  get rightToLeft() { return this._getProp('rightToLeft'); }
-  get rowMetadata(): any[] { return this._rowMetadata; }
-  get columnMetadata(): any[] { return this._columnMetadata; }
+  get sheetId() {
+    return this._getProp('sheetId');
+  }
 
-  set sheetId(newVal: WorksheetProperties['sheetId']) { this._setProp('sheetId', newVal); }
-  set title(newVal: WorksheetProperties['title']) { this._setProp('title', newVal); }
-  set index(newVal: WorksheetProperties['index']) { this._setProp('index', newVal); }
-  set sheetType(newVal: WorksheetProperties['sheetType']) { this._setProp('sheetType', newVal); }
-  set gridProperties(newVal: WorksheetProperties['gridProperties']) { this._setProp('gridProperties', newVal); }
-  set hidden(newVal: WorksheetProperties['hidden']) { this._setProp('hidden', newVal); }
-  set tabColor(newVal: WorksheetProperties['tabColor']) { this._setProp('tabColor', newVal); }
-  set rightToLeft(newVal: WorksheetProperties['rightToLeft']) { this._setProp('rightToLeft', newVal); }
+  get title() {
+    return this._getProp('title');
+  }
+
+  get index() {
+    return this._getProp('index');
+  }
+
+  get sheetType() {
+    return this._getProp('sheetType');
+  }
+
+  get gridProperties() {
+    return this._getProp('gridProperties');
+  }
+
+  get hidden() {
+    return this._getProp('hidden');
+  }
+
+  get tabColor() {
+    return this._getProp('tabColor');
+  }
+
+  get rightToLeft() {
+    return this._getProp('rightToLeft');
+  }
+
+  get rowMetadata(): any[] {
+    return this._rowMetadata;
+  }
+
+  get columnMetadata(): any[] {
+    return this._columnMetadata;
+  }
+
+  set sheetId(newVal: WorksheetProperties['sheetId']) {
+    this._setProp('sheetId', newVal);
+  }
+
+  set title(newVal: WorksheetProperties['title']) {
+    this._setProp('title', newVal);
+  }
+
+  set index(newVal: WorksheetProperties['index']) {
+    this._setProp('index', newVal);
+  }
+
+  set sheetType(newVal: WorksheetProperties['sheetType']) {
+    this._setProp('sheetType', newVal);
+  }
+
+  set gridProperties(newVal: WorksheetProperties['gridProperties']) {
+    this._setProp('gridProperties', newVal);
+  }
+
+  set hidden(newVal: WorksheetProperties['hidden']) {
+    this._setProp('hidden', newVal);
+  }
+
+  set tabColor(newVal: WorksheetProperties['tabColor']) {
+    this._setProp('tabColor', newVal);
+  }
+
+  set rightToLeft(newVal: WorksheetProperties['rightToLeft']) {
+    this._setProp('rightToLeft', newVal);
+  }
 
   get rowCount() {
     this._ensureInfoLoaded();
     return this.gridProperties.rowCount;
   }
+
   get columnCount() {
     this._ensureInfoLoaded();
     return this.gridProperties.columnCount;
   }
 
-  get a1SheetName() { return `'${this.title.replace(/'/g, "''")}'`; }
-  get encodedA1SheetName() { return encodeURIComponent(this.a1SheetName); }
+  get a1SheetName() {
+    return `'${this.title.replace(/'/g, "''")}'`;
+  }
+
+  get encodedA1SheetName() {
+    return encodeURIComponent(this.a1SheetName);
+  }
+
   get lastColumnLetter() {
     // TODO: double check behaviour if data not loaded
     return this.columnCount ? columnToLetter(this.columnCount) : '';
@@ -356,8 +416,18 @@ export class GoogleSpreadsheetWorksheet {
   }
 
   async loadHeaderRow(headerRowIndex?: number, options?: GetValuesRequestOptions) {
-    if (headerRowIndex !== undefined) this._headerRowIndex = headerRowIndex;
-    const rows = await this.getCellsInRange(`A${this._headerRowIndex}:${this.lastColumnLetter}${this._headerRowIndex}`, options);
+    if (headerRowIndex !== undefined) {
+      this._headerRowIndex = headerRowIndex;
+    }
+
+    const rows = await this.getCellsInRange(`A${this._headerRowIndex}:${this.lastColumnLetter}${this._headerRowIndex}`, options).catch(
+      (e) => {
+        if (e.message.includes("TypeError: Cannot read properties of undefined (reading 'values')")) {
+          return undefined;
+        }
+        throw e;
+      }
+    );
     if (!rows) {
       throw new Error('No values in the header row - fill the first row with header values before trying to interact with rows');
     }
@@ -486,6 +556,7 @@ export class GoogleSpreadsheetWorksheet {
 
 
   private _rowCache: GoogleSpreadsheetRow[] = [];
+
   async getRows<T extends Record<string, any>>(
     options?: {
       /** skip first N rows */
@@ -540,10 +611,10 @@ export class GoogleSpreadsheetWorksheet {
   }
 
   /**
-   * @internal
-   * Used internally to update row numbers after deleting rows.
-   * Should not be called directly.
-   * */
+     * @internal
+     * Used internally to update row numbers after deleting rows.
+     * Should not be called directly.
+     * */
   _shiftRowCache(deletedRowNumber: number) {
     delete this._rowCache[deletedRowNumber];
     this._rowCache.forEach((row) => {
@@ -583,8 +654,8 @@ export class GoogleSpreadsheetWorksheet {
   }
 
   /**
-   * passes through the call to updateProperties to update only the gridProperties object
-   */
+     * passes through the call to updateProperties to update only the gridProperties object
+     */
   async updateGridProperties(gridProperties: WorksheetGridProperties) {
     return this.updateProperties({ gridProperties });
   }
@@ -595,9 +666,9 @@ export class GoogleSpreadsheetWorksheet {
   }
 
   /**
-   *
-   * @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#updatedimensionpropertiesrequest
-   */
+     *
+     * @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#updatedimensionpropertiesrequest
+     */
   async updateDimensionProperties(
     columnsOrRows: WorksheetDimension,
     properties: WorksheetDimensionProperties,
@@ -667,9 +738,9 @@ export class GoogleSpreadsheetWorksheet {
   // TODO: check types on these ranges
 
   /**
-   * Merges all cells in the range
-   * @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#MergeCellsRequest
-   */
+     * Merges all cells in the range
+     * @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#MergeCellsRequest
+     */
   async mergeCells(range: GridRangeWithOptionalWorksheetId, mergeType = 'MERGE_ALL') {
     await this._makeSingleUpdateRequest('mergeCells', {
       mergeType,
@@ -678,9 +749,9 @@ export class GoogleSpreadsheetWorksheet {
   }
 
   /**
-   * Unmerges cells in the given range
-   * @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#UnmergeCellsRequest
-   */
+     * Unmerges cells in the given range
+     * @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#UnmergeCellsRequest
+     */
   async unmergeCells(range: GridRangeWithOptionalWorksheetId) {
     await this._makeSingleUpdateRequest('unmergeCells', {
       range: this._addSheetIdToRange(range),
@@ -728,9 +799,9 @@ export class GoogleSpreadsheetWorksheet {
   }
 
   /**
-   * Duplicate worksheet within the document
-   * @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#DuplicateSheetRequest
-   */
+     * Duplicate worksheet within the document
+     * @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#DuplicateSheetRequest
+     */
   async duplicate(
     options?: {
       id?: WorksheetId,
@@ -754,9 +825,9 @@ export class GoogleSpreadsheetWorksheet {
   }
 
   /**
-   * Inserts rows or columns at a particular index
-   * @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#InsertDimensionRequest
-   */
+     * Inserts rows or columns at a particular index
+     * @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#InsertDimensionRequest
+     */
   async insertDimension(
     columnsOrRows: WorksheetDimension,
     rangeIndexes: DimensionRangeIndexes,
@@ -977,9 +1048,9 @@ export class GoogleSpreadsheetWorksheet {
   }
 
   /**
-   * copies this worksheet into another document/spreadsheet
-   * @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo
-   * */
+     * copies this worksheet into another document/spreadsheet
+     * @see https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo
+     * */
   async copyToSpreadsheet(destinationSpreadsheetId: SpreadsheetId) {
     return this._spreadsheet.sheetsApi.post(`/sheets/${this.sheetId}:copyTo`, {
       destinationSpreadsheetId,
@@ -1004,6 +1075,7 @@ export class GoogleSpreadsheetWorksheet {
   async downloadAsCSV(returnStreamInsteadOfBuffer = false) {
     return this._spreadsheet._downloadAs('csv', this.sheetId, returnStreamInsteadOfBuffer);
   }
+
   /** exports worksheet as TSC file (tab-separated values) */
   async downloadAsTSV(): Promise<ArrayBuffer>;
   async downloadAsTSV(returnStreamInsteadOfBuffer: false): Promise<ArrayBuffer>;
@@ -1011,6 +1083,7 @@ export class GoogleSpreadsheetWorksheet {
   async downloadAsTSV(returnStreamInsteadOfBuffer = false) {
     return this._spreadsheet._downloadAs('tsv', this.sheetId, returnStreamInsteadOfBuffer);
   }
+
   /** exports worksheet as PDF */
   async downloadAsPDF(): Promise<ArrayBuffer>;
   async downloadAsPDF(returnStreamInsteadOfBuffer: false): Promise<ArrayBuffer>;
