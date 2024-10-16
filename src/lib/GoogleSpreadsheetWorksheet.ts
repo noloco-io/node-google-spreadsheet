@@ -182,6 +182,8 @@ export class GoogleSpreadsheetWorksheet {
   get hidden() { return this._getProp('hidden'); }
   get tabColor() { return this._getProp('tabColor'); }
   get rightToLeft() { return this._getProp('rightToLeft'); }
+  get rowMetadata(): any[] { return this._rowMetadata; }
+  get columnMetadata(): any[] { return this._columnMetadata; }
   private get _headerRange() {
     return `A${this._headerRowIndex}:${this.lastColumnLetter}${this._headerRowIndex}`;
   }
