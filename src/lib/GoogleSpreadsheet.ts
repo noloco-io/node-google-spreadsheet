@@ -93,6 +93,8 @@ export class GoogleSpreadsheet {
   private _rawProperties = null as SpreadsheetProperties | null;
   private _spreadsheetUrl = null as string | null;
   private _deleted = false;
+  private _rateLimitedRetries = 0;
+  private _initialRateLimitedRetryDelay = 3000;
 
   /**
    * Sheets API [axios](https://axios-http.com) instance
@@ -154,6 +156,10 @@ export class GoogleSpreadsheet {
     );
   }
 
+  setRetryOptions(retries:number, retryDelay:number) {
+    this._rateLimitedRetries = retries;
+    this._initialRateLimitedRetryDelay = retryDelay;
+  }
 
   // AUTH RELATED FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
@@ -172,9 +178,24 @@ export class GoogleSpreadsheet {
   /** @internal */
   async _handleAxiosResponse(response: AxiosResponse) { return response; }
   /** @internal */
-  async _handleAxiosErrors(error: AxiosError) {
-    // console.log(error);
-    const errorData = error.response?.data as any;
+  async _handleAxiosErrors(axiosInstance: AxiosInstance) {
+    return (error: AxiosError) => {
+      if (_.get(error, 'response.status') === 429) {
+        const config = error.config as InternalAxiosRequestConfig & { retryCount?: number };
+        const retryCount = config?.retryCount ?? 0;
+
+        if (this._rateLimitedRetries > 0 && retryCount < this._rateLimitedRetries) {
+          config.retryCount = retryCount + 1;
+
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              resolve(axiosInstance(config));
+            }, this._initialRateLimitedRetryDelay * (retryCount + 1));
+          });
+        }
+      }
+      // console.log(error);
+      const errorData = error.response?.data as any;
 
       if (errorData) {
         // usually the error has a code and message, but occasionally not
@@ -185,12 +206,13 @@ export class GoogleSpreadsheet {
         throw error;
       }
 
-    if (_.get(error, 'response.status') === 403) {
-      if ('apiKey' in this.auth) {
-        throw new Error('Sheet is private. Use authentication or make public. (see https://github.com/theoephraim/node-google-spreadsheet#a-note-on-authentication for details)');
+      if (_.get(error, 'response.status') === 403) {
+        if ('apiKey' in this.auth) {
+          throw new Error('Sheet is private. Use authentication or make public. (see https://github.com/theoephraim/node-google-spreadsheet#a-note-on-authentication for details)');
+        }
       }
-    }
-    throw error;
+      throw error;
+    };
   }
 
   /** @internal */
