@@ -1,6 +1,10 @@
 # google-spreadsheet
 
-> The most popular [Google Sheets API](https://developers.google.com/sheets/api/guides/concepts) wrapper for javascript / typescript
+> A fork of The most popular [Google Sheets API](https://developers.google.com/sheets/api/guides/concepts) wrapper for javascript / typescript
+
+## Differences from the original
+- DeveloperMetadata is supported
+- Retries are supported when rate limited
 
 [![NPM version](https://img.shields.io/npm/v/google-spreadsheet)](https://www.npmjs.com/package/google-spreadsheet)
 [![CI status](https://github.com/theoephraim/node-google-spreadsheet/actions/workflows/ci.yml/badge.svg)](https://github.com/theoephraim/node-google-spreadsheet/actions/workflows/ci.yml)
