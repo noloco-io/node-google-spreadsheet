@@ -502,7 +502,7 @@ export class GoogleSpreadsheetWorksheet {
       offset?: number,
       /** limit number of rows fetched */
       limit?: number,
-    }
+    } & GetValuesRequestOptions
   ) {
     // https://developers.google.com/sheets/api/guides/migration
     // v4 API does not have equivalents for the row-order query parameters provided
@@ -513,6 +513,19 @@ export class GoogleSpreadsheetWorksheet {
     // However, you can retrieve the relevant data and sort through it as needed in your application
     const offset = options?.offset || 0;
     const limit = options?.limit || this.rowCount - 1;
+    let valueRequestOptions: GetValuesRequestOptions | undefined;
+
+    if (options?.majorDimension) {
+      valueRequestOptions = { majorDimension: options.majorDimension };
+    }
+
+    if (options?.valueRenderOption) {
+      if (!valueRequestOptions) {
+        valueRequestOptions = { valueRenderOption: options.valueRenderOption };
+      } else {
+        valueRequestOptions.valueRenderOption = options.valueRenderOption;
+      }
+    }
 
     const firstRow = 1 + this._headerRowIndex + offset;
     const lastRow = firstRow + limit - 1; // inclusive so we subtract 1
@@ -520,12 +533,10 @@ export class GoogleSpreadsheetWorksheet {
     let rawRows;
     if (this._headerValues) {
       const lastColumn = columnToLetter(this.headerValues.length);
-      rawRows = await this.getCellsInRange(
-        `A${firstRow}:${lastColumn}${lastRow}`
-      );
+      rawRows = await this.getCellsInRange(`A${firstRow}:${lastColumn}${lastRow}`, valueRequestOptions);
     } else {
       const result = await this.batchGetCellsInRange([this._headerRange,
-        `A${firstRow}:${this.lastColumnLetter}${lastRow}`]);
+        `A${firstRow}:${this.lastColumnLetter}${lastRow}`], valueRequestOptions);
       this._processHeaderRow(result[0]);
       rawRows = result[1];
     }
