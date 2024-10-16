@@ -1,34 +1,36 @@
-import {ReadableStream} from 'node:stream/web';
+import { ReadableStream } from 'node:stream/web';
 import * as _ from './lodash';
 
-import {GoogleSpreadsheetRow} from './GoogleSpreadsheetRow';
-import {GoogleSpreadsheetCell} from './GoogleSpreadsheetCell';
+import { GoogleSpreadsheetRow } from './GoogleSpreadsheetRow';
+import { GoogleSpreadsheetCell } from './GoogleSpreadsheetCell';
 
-import {checkForDuplicateHeaders, columnToLetter, getFieldMask, letterToColumn,} from './utils';
-import {GoogleSpreadsheet} from './GoogleSpreadsheet';
 import {
-    A1Address,
-    A1Range,
-    AddRowOptions,
-    CellDataRange,
-    ColumnIndex,
-    DataFilter,
-    DataFilterWithoutWorksheetId,
-    DataValidationRule,
-    DeveloperMetadataId,
-    DeveloperMetadataKey,
-    DeveloperMetadataValue,
-    DeveloperMetadataVisibility,
-    DimensionRangeIndexes,
-    GetValuesRequestOptions,
-    GridRangeWithOptionalWorksheetId,
-    RowIndex,
-    SpreadsheetId,
-    WorksheetDimension,
-    WorksheetDimensionProperties,
-    WorksheetGridProperties,
-    WorksheetId,
-    WorksheetProperties,
+  checkForDuplicateHeaders, columnToLetter, getFieldMask, letterToColumn,
+} from './utils';
+import { GoogleSpreadsheet } from './GoogleSpreadsheet';
+import {
+  A1Address,
+  A1Range,
+  AddRowOptions,
+  CellDataRange,
+  ColumnIndex,
+  DataFilter,
+  DataFilterWithoutWorksheetId,
+  DataValidationRule,
+  DeveloperMetadataId,
+  DeveloperMetadataKey,
+  DeveloperMetadataValue,
+  DeveloperMetadataVisibility,
+  DimensionRangeIndexes,
+  GetValuesRequestOptions,
+  GridRangeWithOptionalWorksheetId,
+  RowIndex,
+  SpreadsheetId,
+  WorksheetDimension,
+  WorksheetDimensionProperties,
+  WorksheetGridProperties,
+  WorksheetId,
+  WorksheetProperties,
 } from './types/sheets-types';
 
 
@@ -371,7 +373,7 @@ export class GoogleSpreadsheetWorksheet {
     if (!rows) {
       throw new Error('No values in the header row - fill the first row with header values before trying to interact with rows');
     }
-    this._headerValues = _.map(rows[0], (header) => header?.toString().trim());
+    this._headerValues = _.map(rows[0], (header) => header?.toString()?.trim());
     if (!_.compact(this.headerValues).length) {
       throw new Error('All your header cells are blank - fill the first row with header values before trying to interact with rows');
     }
@@ -383,7 +385,7 @@ export class GoogleSpreadsheetWorksheet {
     if (headerValues.length > this.columnCount) {
       throw new Error(`Sheet is not large enough to fit ${headerValues.length} columns. Resize the sheet first.`);
     }
-    const trimmedHeaderValues = _.map(headerValues, (h) => h?.toString().trim());
+    const trimmedHeaderValues = _.map(headerValues, (h) => h?.toString()?.trim());
     checkForDuplicateHeaders(trimmedHeaderValues);
 
     if (!_.compact(trimmedHeaderValues).length) {
@@ -533,10 +535,16 @@ export class GoogleSpreadsheetWorksheet {
     let rawRows;
     if (this._headerValues) {
       const lastColumn = columnToLetter(this.headerValues.length);
-      rawRows = await this.getCellsInRange(`A${firstRow}:${lastColumn}${lastRow}`, valueRequestOptions);
+      rawRows = await this.getCellsInRange(
+        `A${firstRow}:${lastColumn}${lastRow}`,
+        valueRequestOptions
+      );
     } else {
-      const result = await this.batchGetCellsInRange([this._headerRange,
-        `A${firstRow}:${this.lastColumnLetter}${lastRow}`], valueRequestOptions);
+      const result = await this.batchGetCellsInRange(
+        [this._headerRange,
+          `A${firstRow}:${this.lastColumnLetter}${lastRow}`],
+        valueRequestOptions
+      );
       this._processHeaderRow(result[0]);
       rawRows = result[1];
     }

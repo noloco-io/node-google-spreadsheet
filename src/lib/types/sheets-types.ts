@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {MakeOptional} from './util-types';
+import { MakeOptional } from './util-types';
 
 // some basic types which are just aliases, but they make the code a bit clearer
 export type Integer = number;

@@ -1,21 +1,21 @@
 /* eslint-disable max-classes-per-file */
 import * as _ from './lodash';
 
-import {columnToLetter} from './utils';
+import { columnToLetter } from './utils';
 
-import {GoogleSpreadsheetWorksheet} from './GoogleSpreadsheetWorksheet';
-import {GoogleSpreadsheetCellErrorValue} from './GoogleSpreadsheetCellErrorValue';
+import { GoogleSpreadsheetWorksheet } from './GoogleSpreadsheetWorksheet';
+import { GoogleSpreadsheetCellErrorValue } from './GoogleSpreadsheetCellErrorValue';
 
 import {
-    CellData,
-    CellFormat,
-    CellValueType,
-    ColumnIndex,
-    DeveloperMetadataId,
-    DeveloperMetadataKey,
-    DeveloperMetadataValue,
-    DeveloperMetadataVisibility,
-    RowIndex,
+  CellData,
+  CellFormat,
+  CellValueType,
+  ColumnIndex,
+  DeveloperMetadataId,
+  DeveloperMetadataKey,
+  DeveloperMetadataValue,
+  DeveloperMetadataVisibility,
+  RowIndex,
 } from './types/sheets-types';
 
 export class GoogleSpreadsheetCell {

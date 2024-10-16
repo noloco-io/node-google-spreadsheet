@@ -1,10 +1,10 @@
-import {GoogleSpreadsheetWorksheet} from './GoogleSpreadsheetWorksheet';
-import {columnToLetter} from './utils';
+import { GoogleSpreadsheetWorksheet } from './GoogleSpreadsheetWorksheet';
+import { columnToLetter } from './utils';
 import {
-    DeveloperMetadataId,
-    DeveloperMetadataKey,
-    DeveloperMetadataValue,
-    DeveloperMetadataVisibility,
+  DeveloperMetadataId,
+  DeveloperMetadataKey,
+  DeveloperMetadataValue,
+  DeveloperMetadataVisibility,
 } from './types/sheets-types';
 
 
