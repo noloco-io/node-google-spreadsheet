@@ -1,17 +1,29 @@
-import Axios, {
-  AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig,
-} from 'axios';
+import Axios, {AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig,} from 'axios';
 
-import { Stream } from 'stream';
+import {Stream} from 'stream';
 import * as _ from './lodash';
-import { GoogleSpreadsheetWorksheet } from './GoogleSpreadsheetWorksheet';
-import { axiosParamsSerializer, getFieldMask } from './utils';
+import {GoogleSpreadsheetWorksheet} from './GoogleSpreadsheetWorksheet';
+import {axiosParamsSerializer, getFieldMask} from './utils';
 import {
-  DataFilter, GridRange, NamedRangeId, SpreadsheetId, SpreadsheetProperties, WorksheetId, WorksheetProperties,
+    A1Range,
+    DataFilter,
+    DeveloperMetadataDataFilter,
+    DeveloperMetadataId,
+    DeveloperMetadataKey,
+    DeveloperMetadataLocation,
+    DeveloperMetadataValue,
+    DeveloperMetadataVisibility,
+    DimensionRange,
+    GridRange,
+    NamedRangeId,
+    SpreadsheetId,
+    SpreadsheetProperties,
+    WorksheetId,
+    WorksheetProperties,
 } from './types/sheets-types';
-import { PermissionRoles, PermissionsList, PublicPermissionRoles } from './types/drive-types';
-import { RecursivePartial } from './types/util-types';
-import { AUTH_MODES, GoogleApiAuth } from './types/auth-types';
+import {PermissionRoles, PermissionsList, PublicPermissionRoles} from './types/drive-types';
+import {RecursivePartial} from './types/util-types';
+import {AUTH_MODES, GoogleApiAuth} from './types/auth-types';
 
 
 const SHEETS_API_BASE_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
@@ -164,14 +176,14 @@ export class GoogleSpreadsheet {
     // console.log(error);
     const errorData = error.response?.data as any;
 
-    if (errorData) {
-      // usually the error has a code and message, but occasionally not
-      if (!errorData.error) throw error;
+      if (errorData) {
+        // usually the error has a code and message, but occasionally not
+        if (!errorData.error) throw error;
 
-      const { code, message } = errorData.error;
-      error.message = `Google API error - [${code}] ${message}`;
-      throw error;
-    }
+        const { code, message } = errorData.error;
+        error.message = `Google API error - [${code}] ${message}`;
+        throw error;
+      }
 
     if (_.get(error, 'response.status') === 403) {
       if ('apiKey' in this.auth) {
@@ -633,5 +645,90 @@ export class GoogleSpreadsheet {
     _.each(response.data.sheets, (s) => newSpreadsheet._updateOrCreateSheet(s));
 
     return newSpreadsheet;
+  }
+
+  //
+  // DEVELOPER METADATA ////////////////////////////////////////////////////////////////////////////////
+
+  async _createDeveloperMetadata(
+    metadataKey: DeveloperMetadataKey,
+    metadataValue: DeveloperMetadataValue,
+    location: Partial<DeveloperMetadataLocation>,
+    visibility?: DeveloperMetadataVisibility,
+    metadataId?: DeveloperMetadataId
+  ) {
+    // Request type = `createDeveloperMetadata`
+    // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.developerMetadata#DeveloperMetadata
+    return this._makeSingleUpdateRequest('createDeveloperMetadata', {
+      developerMetadata: {
+        metadataKey,
+        metadataValue,
+        location,
+        visibility: visibility || 'PROJECT',
+        metadataId,
+      },
+    }).then((data) => data.developerMetadata);
+  }
+
+  async _getDeveloperMetadata(dataFilter: DeveloperMetadataDataFilter) {
+    // Request type = `developerMetadata:search`
+    // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.developerMetadata/search
+    return this.sheetsApi
+      .post('/developerMetadata:search', {
+        dataFilters: [dataFilter],
+      })
+      .then((response) => response.data.matchedDeveloperMetadata);
+  }
+
+  async getMetadataById(metadataId: DeveloperMetadataId) {
+    // Request type = `developerMetadata`
+    // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.developerMetadata/get
+    return this.sheetsApi
+      .get(`/developerMetadata/${metadataId}`)
+      .then((response) => response.data);
+  }
+
+  async createSheetDeveloperMetadata(
+    metadataKey: DeveloperMetadataKey,
+    metadataValue: DeveloperMetadataValue,
+    sheetId: WorksheetId,
+    visibility?: DeveloperMetadataVisibility,
+    metadataId?: DeveloperMetadataId
+  ) {
+    return this._createDeveloperMetadata(
+      metadataKey,
+      metadataValue,
+      {
+        sheetId: sheetId ?? 0,
+      },
+      visibility,
+      metadataId
+    );
+  }
+
+  async createRangeDeveloperMetadata(
+    metadataKey: DeveloperMetadataKey,
+    metadataValue: DeveloperMetadataValue,
+    range: DimensionRange,
+    visibility?: DeveloperMetadataVisibility,
+    metadataId?: DeveloperMetadataId
+  ) {
+    return this._createDeveloperMetadata(
+      metadataKey,
+      metadataValue,
+      {
+        dimensionRange: range,
+      },
+      visibility,
+      metadataId
+    );
+  }
+
+  async getDeveloperMetadataByA1Range(a1Range: A1Range) {
+    return this._getDeveloperMetadata({ a1Range });
+  }
+
+  async getDeveloperMetadataByGridRange(gridRange: GridRange) {
+    return this._getDeveloperMetadata({ gridRange });
   }
 }

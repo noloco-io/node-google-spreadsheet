@@ -1,18 +1,34 @@
-import { ReadableStream } from 'node:stream/web';
+import {ReadableStream} from 'node:stream/web';
 import * as _ from './lodash';
 
-import { GoogleSpreadsheetRow } from './GoogleSpreadsheetRow';
-import { GoogleSpreadsheetCell } from './GoogleSpreadsheetCell';
+import {GoogleSpreadsheetRow} from './GoogleSpreadsheetRow';
+import {GoogleSpreadsheetCell} from './GoogleSpreadsheetCell';
 
+import {checkForDuplicateHeaders, columnToLetter, getFieldMask, letterToColumn,} from './utils';
+import {GoogleSpreadsheet} from './GoogleSpreadsheet';
 import {
-  getFieldMask, columnToLetter, letterToColumn, checkForDuplicateHeaders,
-} from './utils';
-import { GoogleSpreadsheet } from './GoogleSpreadsheet';
-import {
-  A1Range, SpreadsheetId, DimensionRangeIndexes, WorksheetDimension, WorksheetId, WorksheetProperties, A1Address,
-  RowIndex, ColumnIndex, DataFilterWithoutWorksheetId, DataFilter, GetValuesRequestOptions, WorksheetGridProperties,
-  WorksheetDimensionProperties, CellDataRange, AddRowOptions, GridRangeWithOptionalWorksheetId,
-  DataValidationRule,
+    A1Address,
+    A1Range,
+    AddRowOptions,
+    CellDataRange,
+    ColumnIndex,
+    DataFilter,
+    DataFilterWithoutWorksheetId,
+    DataValidationRule,
+    DeveloperMetadataId,
+    DeveloperMetadataKey,
+    DeveloperMetadataValue,
+    DeveloperMetadataVisibility,
+    DimensionRangeIndexes,
+    GetValuesRequestOptions,
+    GridRangeWithOptionalWorksheetId,
+    RowIndex,
+    SpreadsheetId,
+    WorksheetDimension,
+    WorksheetDimensionProperties,
+    WorksheetGridProperties,
+    WorksheetId,
+    WorksheetProperties,
 } from './types/sheets-types';
 
 
@@ -910,9 +926,21 @@ export class GoogleSpreadsheetWorksheet {
     // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#DeleteBandingRequest
   }
 
-  async createDeveloperMetadata() {
+  async createDeveloperMetadata(
+    metadataKey: DeveloperMetadataKey,
+    metadataValue: DeveloperMetadataValue,
+    visibility: DeveloperMetadataVisibility,
+    metadataId: DeveloperMetadataId
+  ) {
     // Request type = `createDeveloperMetadata`
     // https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#CreateDeveloperMetadataRequest
+    return this._spreadsheet.createSheetDeveloperMetadata(
+      metadataKey,
+      metadataValue,
+      this.sheetId,
+      visibility,
+      metadataId
+    );
   }
 
   async updateDeveloperMetadata() {
