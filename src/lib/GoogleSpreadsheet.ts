@@ -303,6 +303,10 @@ export class GoogleSpreadsheet {
         ...includeCells && { includeGridData: true },
       },
     });
+    if (!response.data?.spreadsheetUrl) {
+      throw new Error(`Failed to load document info. Status: ${response.status},  Status Text: ${response.statusText}, Data: ${response.data}`);
+    }
+
     this._spreadsheetUrl = response.data.spreadsheetUrl;
     this._rawProperties = response.data.properties;
     _.each(response.data.sheets, (s) => this._updateOrCreateSheet(s));
