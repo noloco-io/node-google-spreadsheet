@@ -1,29 +1,31 @@
-import Axios, {AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig,} from 'axios';
+import Axios, {
+  AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig,
+} from 'axios';
 
-import {Stream} from 'stream';
+import { Stream } from 'stream';
 import * as _ from './lodash';
-import {GoogleSpreadsheetWorksheet} from './GoogleSpreadsheetWorksheet';
-import {axiosParamsSerializer, getFieldMask} from './utils';
+import { GoogleSpreadsheetWorksheet } from './GoogleSpreadsheetWorksheet';
+import { axiosParamsSerializer, getFieldMask } from './utils';
 import {
-    A1Range,
-    DataFilter,
-    DeveloperMetadataDataFilter,
-    DeveloperMetadataId,
-    DeveloperMetadataKey,
-    DeveloperMetadataLocation,
-    DeveloperMetadataValue,
-    DeveloperMetadataVisibility,
-    DimensionRange,
-    GridRange,
-    NamedRangeId,
-    SpreadsheetId,
-    SpreadsheetProperties,
-    WorksheetId,
-    WorksheetProperties,
+  A1Range,
+  DataFilter,
+  DeveloperMetadataDataFilter,
+  DeveloperMetadataId,
+  DeveloperMetadataKey,
+  DeveloperMetadataLocation,
+  DeveloperMetadataValue,
+  DeveloperMetadataVisibility,
+  DimensionRange,
+  GridRange,
+  NamedRangeId,
+  SpreadsheetId,
+  SpreadsheetProperties,
+  WorksheetId,
+  WorksheetProperties,
 } from './types/sheets-types';
-import {PermissionRoles, PermissionsList, PublicPermissionRoles} from './types/drive-types';
-import {RecursivePartial} from './types/util-types';
-import {AUTH_MODES, GoogleApiAuth} from './types/auth-types';
+import { PermissionRoles, PermissionsList, PublicPermissionRoles } from './types/drive-types';
+import { RecursivePartial } from './types/util-types';
+import { AUTH_MODES, GoogleApiAuth } from './types/auth-types';
 
 
 const SHEETS_API_BASE_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
@@ -301,8 +303,30 @@ export class GoogleSpreadsheet {
         ...includeCells && { includeGridData: true },
       },
     });
-    if (!response.data?.spreadsheetUrl) {
-      throw new Error(`Failed to load document info. Status: ${response.status},  Status Text: ${response.statusText}, Data: ${JSON.stringify(response.data)}`);
+
+    if (!response.data && response.status) {
+      throw new Error(`Failed to load document info. Status: ${response.status},  Status Text: ${response.statusText}`);
+    } else if (!response.data) {
+      // Explicitly retry with just plain `fetch` to see if we get a better error message
+
+
+      try {
+        const fetchResponse = await fetch(`${SHEETS_API_BASE_URL}/${this.spreadsheetId}/`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(await getRequestAuthConfig(this.auth) as any).headers,
+          },
+        });
+        const fetchBody = await fetchResponse.text();
+        const statusCode = fetchResponse.status;
+        const statusText = fetchResponse.statusText;
+        throw new Error(`Failed to load document info. Status: ${statusCode},  Status Text: ${statusText}, Body: ${fetchBody}`);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to load document info. No response body available', e);
+        throw new Error('Failed to load document info. No response body available', { cause: e });
+      }
     }
 
     this._spreadsheetUrl = response.data.spreadsheetUrl;

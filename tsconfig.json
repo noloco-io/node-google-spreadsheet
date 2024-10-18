@@ -9,7 +9,8 @@
     "strict": true,
     "noEmitOnError": true,
     "lib": [
-      "esnext"
+      "esnext",
+      "dom"
     ],
     "esModuleInterop": true,
     "resolveJsonModule": true
